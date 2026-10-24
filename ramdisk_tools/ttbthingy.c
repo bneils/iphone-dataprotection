@@ -661,7 +661,7 @@ int check_ios_version()
 
     printf("iOS major version: %ld\n", major);
 
-    if(major != 8 && major != 7 && major != 6)
+    if(major != 9 && major != 8 && major != 7 && major != 6)
     {
         printf("Unsupported iOS version !\n");
         return 0;
@@ -801,7 +801,7 @@ com.apple.iokit.IOCryptoAcceleratorFamily:__text:8094BD4C 00 F0 A2 80           
     {
         if(!memcmp(ptr, "\xB0\xF5\xFA\x6F\x00\xF0\xA2\x80", 8)//ios7
          || !memcmp(ptr, "\xB0\xF5\xFA\x6F\x00\xF0\x92\x80", 8)//ios6
-         || !memcmp(ptr, "\xB0\xF5\xFA\x6F\x00\xF0\x82\x80", 8))//ios8
+         || !memcmp(ptr, "\xB0\xF5\xFA\x6F\x00\xF0\x82\x80", 8))//ios8 and ios9
         {
             printf("Patching IOSAESAccelerator enable uid key !\n");
             ptr += 4;
@@ -809,38 +809,6 @@ com.apple.iokit.IOCryptoAcceleratorFamily:__text:8094BD4C 00 F0 A2 80           
         }
         //if(!memcmp(ptr, "\xF0\xB5\x03\xAF\x4D\xF8\x04\x8D\x8B\xB0\x15\x46\x40\xF2\xC2\x26", 16))
         //IOFlashControllerUserClient::externalMethod
-        if(!memcmp(ptr, "\xF0\xB5\x03\xAF\x4D\xF8\x04\x8D\x8B\xB0\x15\x46", 12)
-         ||!memcmp(ptr, "\xF0\xB5\x03\xAF\x4D\xF8\x04\x8D\x8B\xB0\x16\x46", 12))//ios8
-        {
-            addr = (ptr - SHADOWMAP_BEGIN) + kernel_base  - 0x1000;
-            printf("Found ioFlash at %p\n", addr);
-            if(!iomem)
-            {
-                printf("But missing IOMemoryDescriptor::withAddress !\n");
-            }
-            else
-            {
-                iomem = (uint8_t*) -(addr + 2 + 0xC - (iomem + 1));
-                printf("delta = %p\n", iomem);
-                memcpy(ptr, externalMethod_bin, externalMethod_bin_len);
-                memcpy(ptr + externalMethod_bin_len, &iomem, 4);
-            }
-        }
-        if(!memcmp(ptr, "\xF0\xB5\x03\xAF\x2D\xE9\x00\x0D\x81\xB0\x06\x46\x64\x20\x9B\x46", 16))
-        {
-            if(iomem == 0)
-            {
-                iomem = (ptr - SHADOWMAP_BEGIN) + kernel_base - 0x1000;
-                printf("Found IOMemoryDescriptor::withAddress at %p\n", iomem);
-            }
-        }
-        //meta fringe
-        if(!memcmp(ptr, "\xF0\xB5\x03\xAF\x81\xB0\x1C\x46\x15\x46\x0E\x46\xB5\x42", 14)
-         ||!memcmp(ptr, "\xF0\xB5\x03\xAF\x81\xB0\x1C\x46\x15\x46\x0E\x46\xAE\x42", 14))//ios8
-        {
-            printf("Found AppleIOPFMI::_fmiPatchMetaFringe\n");
-            *((uint32_t*) ptr) = 0x47704770;
-        }
         ptr += 2;
     }
 

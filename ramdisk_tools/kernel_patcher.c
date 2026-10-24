@@ -35,6 +35,7 @@ int patch_IOAESAccelerator()
         fprintf(stderr, "task_for_pid returned %x : missing tfp0 kernel patch or wrong entitlements\n", r);
         return 0;
     }
+    // REMOVED: return 0;
     uint32_t i;
     pointer_t buf;
     unsigned int sz;
@@ -50,7 +51,17 @@ int patch_IOAESAccelerator()
         
         for(i=0; i < sz; i++)
         {
+            
         //"IOAESAccelerator enable UID" : (h("67 D0 40 F6"), h("00 20 40 F6")),
+            if(!memcmp(p, "\xB0\xF5\xFA\x6F\x00\xF0\xA2\x80", 8)//ios7
+             || !memcmp(p, "\xB0\xF5\xFA\x6F\x00\xF0\x92\x80", 8)//ios6
+             || !memcmp(p, "\xB0\xF5\xFA\x6F\x00\xF0\x82\x80", 8))//ios8 and ios9
+            {
+                fprintf(stderr, "Found IOAESAccelerator UID ptr at %x, patching kernel\n", (uint32_t)  addr + i + 4);
+                printf("Patching IOSAESAccelerator enable uid key !\n");
+                write_kernel(kernel_task, (void*) (addr + i + 4), (uint32_t) 0x460c460c);
+                return 0;
+            }
             if (*((uint32_t*)&p[i]) == 0xF640d067)
             {
                 fprintf(stderr, "Found IOAESAccelerator UID ptr at %x, patching kernel\n", (uint32_t)  addr + i);
